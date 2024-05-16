@@ -50,7 +50,7 @@ class DryMassFoliageSolver:
                 )) / (1 / self.AvgLongevity_root + self.CtoDM_frac * self.Resp_Nspecific * self.Nconc_foliage * self.NrNf_ratio))
 
         symb_DM_foliage_C = symb_beta1 / (symb_beta2 + symb_psi_r) - self.Kf
-        return symb_DM_foliage_C, symb_beta1, symb_beta2
+        return [symb_DM_foliage_C, symb_beta1, symb_beta2]
 
     def solve_nitrogen(self, symb_psi_r):
         """
@@ -70,22 +70,27 @@ class DryMassFoliageSolver:
         )
 
         symb_DM_foliage_N = symb_beta3 / (symb_beta4 + symb_psi_r) - self.Kr / symb_psi_r
-        return symb_DM_foliage_N, symb_beta3, symb_beta4
+        return [symb_DM_foliage_N, symb_beta3, symb_beta4]
 
 
 class BiomassProductionSolver:
-    def __init__(self, psi_r, params_dict):
+    def __init__(self, params_dict):
         self.Nconc_foliage = sp.symbols("Nconc_foliage")
-        self.psi_r = psi_r
         self.AvgLongevity_foliage = params_dict["AvgLongevity_foliage"]
         self.AvgLongevity_wood = params_dict["AvgLongevity_wood"]
         self.AvgLongevity_root = params_dict["AvgLongevity_root"]
         self.alpha_w = params_dict["alpha_w"]
         self.c_H = params_dict["c_H"]
 
-    def solve_total_biomass_production(self, symb_DM_foliage):
+    def solve_total_biomass_production(self, symb_DM_foliage, symb_psi_r):
+        """
+
+        :param symb_DM_foliage: f(Nconc_foliage)
+        :param symb_psi_r: f(Nconc_foliage)
+        :return:
+        """
         symb_DM_production = symb_DM_foliage * (
-            1 / self.AvgLongevity_foliage + self.psi_r / self.AvgLongevity_root +
+            1 / self.AvgLongevity_foliage + symb_psi_r / self.AvgLongevity_root +
             self.alpha_w * self.c_H * self.Nconc_foliage / self.AvgLongevity_wood
         )
         return symb_DM_production
