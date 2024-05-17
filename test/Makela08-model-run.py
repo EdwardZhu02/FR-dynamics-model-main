@@ -7,7 +7,7 @@
 # @E-mail           : edwardmashed@gmail.com
 # ====================================
 
-from modules.cn_allocation import Makela08_alloc_parameter
+from modules.cn_allocation import Makela08_alloc_parameter, Makela08_alloc_symbsolver
 import numpy as np
 import sympy as sp
 
@@ -66,13 +66,13 @@ Nconc_foliage, psi_r, Photosyn_lightsat, Nup_max_specific = sp.symbols(
 exp_beta1 = CtoDM_frac * Photosyn_lightsat * Kf / (1 / AvgLongevity_root + Resp_Nspecific * Nconc_foliage * NrNf_ratio)
 
 exp_beta2 = (1 / AvgLongevity_foliage + Nconc_foliage * (
-            alpha_w * c_H / AvgLongevity_wood +
-            CtoDM_frac * Resp_Nspecific * (1 + NwNf_ratio * alpha_w * c_H * Nconc_foliage)
-    )) / (1 / AvgLongevity_root + CtoDM_frac * Resp_Nspecific * Nconc_foliage * NrNf_ratio)
+        alpha_w * c_H / AvgLongevity_wood +
+        CtoDM_frac * Resp_Nspecific * (1 + NwNf_ratio * alpha_w * c_H * Nconc_foliage)
+)) / (1 / AvgLongevity_root + CtoDM_frac * Resp_Nspecific * Nconc_foliage * NrNf_ratio)
 
 exp_beta3 = (Nup_max_specific * Kr) / (
-            Nconc_foliage * (1 - NResorbFrac_root) * NrNf_ratio / AvgLongevity_root
-    )
+        Nconc_foliage * (1 - NResorbFrac_root) * NrNf_ratio / AvgLongevity_root
+)
 
 exp_beta4 = (
                     (1 - NResorbFrac_foliage) / AvgLongevity_foliage +
@@ -82,16 +82,18 @@ exp_beta4 = (
             )
 
 exp_a1 = (exp_beta1 - exp_beta3 + Kr - Kf * (exp_beta2 + exp_beta4)) / -Kf
-exp_a2 = (exp_beta1 * exp_beta4 - exp_beta2 * exp_beta3 + Kr * (exp_beta2 + exp_beta4) - Kf * exp_beta2 * exp_beta4) / -Kf
+exp_a2 = (exp_beta1 * exp_beta4 - exp_beta2 * exp_beta3 + Kr * (
+            exp_beta2 + exp_beta4) - Kf * exp_beta2 * exp_beta4) / -Kf
 exp_a3 = Kr * exp_beta2 * exp_beta4 / -Kf
 
-exp_cubiceq_psi_r = psi_r**3 + exp_a1*psi_r**2 + exp_a2*psi_r + exp_a3
+exp_cubiceq_psi_r = psi_r ** 3 + exp_a1 * psi_r ** 2 + exp_a2 * psi_r + exp_a3
 
 # Symbolic solutions, containing Nconc_foliage, psi_r, Photosyn_lightsat, Nup_max_specific
 # Photosyn_lightsat, Nup_max_specific is evaluated later so the final solution is psi_r given a Nconc_foliage.
 exp_cubiceq_psi_r_solutions = sp.solve(exp_cubiceq_psi_r, psi_r)
 
 # Enumerate the 2-D matrix
+psi_r_solution_dict = {}
 try:
     for i in range(len(gradient_matrix_n)):  # or gradient_matrix_p
         for j in range(len(gradient_matrix_n[i])):
@@ -103,7 +105,29 @@ try:
                 i.evalf(subs={Nup_max_specific: _Nup_max_specific, Photosyn_lightsat: _Photosyn_lightsat}) for i in
                 exp_cubiceq_psi_r_solutions]
 
-            raise StopIteration
+            psi_r_solution_dict[(_Nup_max_specific, _Photosyn_lightsat)] = psi_r_solution_list
+
+            # raise StopIteration
 except StopIteration:
     pass
 
+# Example
+# Pick one for further optimization
+test_Nup_max_specific = 4
+test_Photosyn_lightsat = 8
+psi_r_solution_example = psi_r_solution_dict[(test_Nup_max_specific, test_Photosyn_lightsat)]
+
+Wf_solver = Makela08_alloc_symbsolver.DryMassFoliageSolver(
+    test_Nup_max_specific, test_Photosyn_lightsat, params_dict
+)
+
+symb_DM_foliage_C = Wf_solver.solve_carbon(psi_r_solution_example[0])[0]
+symb_DM_foliage_N = Wf_solver.solve_nitrogen(psi_r_solution_example[0])[0]
+
+G_solver = Makela08_alloc_symbsolver.BiomassProductionSolver(params_dict)
+
+symb_G_C = G_solver.solve_total_biomass_production(symb_DM_foliage_C, psi_r_solution_example[0])
+symb_G_N = G_solver.solve_total_biomass_production(symb_DM_foliage_N, psi_r_solution_example[0])
+
+G_optimizer = Makela08_alloc_symbsolver.BiomassProductionOptimizer(symb_G_C, symb_G_N)
+Nconc_foliage_maxG, maxG_value = G_optimizer.optimize_total_biomass_production(0, 10, "C")
