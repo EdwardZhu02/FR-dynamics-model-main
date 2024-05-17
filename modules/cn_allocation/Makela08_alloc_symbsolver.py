@@ -12,6 +12,73 @@
 import sympy as sp
 import numpy as np
 from scipy.optimize import minimize_scalar
+from numpy.polynomial.polynomial import Polynomial
+
+
+class PsiRCubicEqnSolver:
+    def __init__(self, params_dict):
+        self.alpha_w = params_dict["alpha_w"]
+        self.c_H = params_dict["c_H"]
+        self.NrNf_ratio = params_dict["NrNf_ratio"]
+        self.NwNf_ratio = params_dict["NwNf_ratio"]
+        self.Resp_Nspecific = params_dict["Resp_Nspecific"]
+        self.CtoDM_frac = params_dict["CtoDM_frac"]
+        self.Kr = params_dict["Kr"]
+        self.Kf = params_dict["Kf"]
+        self.AvgLongevity_foliage = params_dict["AvgLongevity_foliage"]
+        self.AvgLongevity_wood = params_dict["AvgLongevity_wood"]
+        self.AvgLongevity_root = params_dict["AvgLongevity_root"]
+        self.NResorbFrac_foliage = params_dict["NResorbFrac_foliage"]
+        self.NResorbFrac_wood = params_dict["NResorbFrac_wood"]
+        self.NResorbFrac_root = params_dict["NResorbFrac_root"]
+
+    def solve_cubic_eqn_numeric(self, Nup_max_specific, Photosyn_lightsat, Nconc_foliage):
+        """
+        Solve psi_r = f(Nconc_foliage), given Nup_max_specific and Photosyn_lightsat
+        :param Nup_max_specific:
+        :param Photosyn_lightsat:
+        :param Nconc_foliage:
+        :return:
+        """
+
+        num_beta1 = (self.CtoDM_frac * Photosyn_lightsat * self.Kf /
+                     (1 / self.AvgLongevity_root + self.Resp_Nspecific * Nconc_foliage * self.NrNf_ratio))
+
+        num_beta2 = ((1 / self.AvgLongevity_foliage + Nconc_foliage * (
+                self.alpha_w * self.c_H / self.AvgLongevity_wood +
+                self.CtoDM_frac * self.Resp_Nspecific * (
+                        1 + self.NwNf_ratio * self.alpha_w * self.c_H * Nconc_foliage)
+        )) / (
+                             1 / self.AvgLongevity_root + self.CtoDM_frac * self.Resp_Nspecific * Nconc_foliage * self.NrNf_ratio))
+
+        num_beta3 = (Nup_max_specific * self.Kr) / (
+                Nconc_foliage * (1 - self.NResorbFrac_root) * self.NrNf_ratio / self.AvgLongevity_root)
+
+        num_beta4 = (
+                ((1 - self.NResorbFrac_foliage) / self.AvgLongevity_foliage +
+                 (
+                         1 - self.NResorbFrac_wood) * self.NwNf_ratio * self.alpha_w * self.c_H * Nconc_foliage / self.AvgLongevity_wood
+                 ) / ((1 - self.NResorbFrac_root) * self.NrNf_ratio / self.AvgLongevity_root)
+        )
+
+        a_1 = float((num_beta1 - num_beta3 + self.Kr - self.Kf * (num_beta2 + num_beta4)) / -self.Kf)
+        a_2 = float((num_beta1 * num_beta4 - num_beta2 * num_beta3 + self.Kr * (
+                num_beta2 + num_beta4) - self.Kf * num_beta2 * num_beta4) / -self.Kf)
+        a_3 = float(self.Kr * num_beta2 * num_beta4 / -self.Kf)
+
+        # p = Polynomial([a_3, a_2, a_1, 0])  # x^3 + a1x^2 + a2x + a3
+        # psi_r_roots = p.roots()
+        # psi_r_real_roots = psi_r_roots[np.isreal(psi_r_roots)].real
+
+        x = sp.var('x')
+        psi_r_roots = sp.solve(sp.Eq(x ** 3 + a_1 * x ** 2 + a_2 * x + a_3, 0), x)
+
+        # Ref: https://blog.csdn.net/qq_43374245/article/details/125591922
+        # Dealing with 0.e-XI non-complex problem
+        psi_r_roots_conv = [float(str(indv_root).split(" ")[0]) for indv_root in psi_r_roots
+                            if not isinstance(indv_root, complex)]
+
+        return psi_r_roots, psi_r_roots_conv, [a_1, a_2, a_3]
 
 
 class DryMassFoliageSolver:
@@ -137,5 +204,3 @@ class BiomassProductionOptimizer:
         maxG_value = -f_max_result.fun
 
         return Nconc_foliage_maxG, maxG_value
-
-
