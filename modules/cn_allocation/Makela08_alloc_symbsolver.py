@@ -12,6 +12,7 @@
 import sympy as sp
 import numpy as np
 from scipy.optimize import minimize_scalar
+import matplotlib.pyplot as plt
 from numpy.polynomial.polynomial import Polynomial
 
 
@@ -193,14 +194,20 @@ class BiomassProductionOptimizer:
         else:  # method == "N"
             f_numeric = sp.lambdify(Nconc_foliage, self._symb_G_N, 'numpy')
 
-        def func_to_minimize(x_val):
-            return -f_numeric(x_val)
+        return self._symb_G_C
 
-        # Use scipy's minimize_scalar function to find the maximum
-        f_max_result = minimize_scalar(func_to_minimize,
-                                       bounds=(float(range_lower), float(range_upper)), method='bounded')
-        # Get the maximum value and the corresponding x value
-        Nconc_foliage_maxG = f_max_result.x
-        maxG_value = -f_max_result.fun
+        # x_vals = np.linspace(100,1000,4500)
+        # y_vals = f_numeric(x_vals)
+        # plt.plot(x_vals,y_vals)
 
-        return Nconc_foliage_maxG, maxG_value
+        # def func_to_minimize(x_val):
+        #     return -f_numeric(x_val)
+
+        # # Use scipy's minimize_scalar function to find the maximum
+        # f_max_result = minimize_scalar(func_to_minimize,
+        #                                bounds=(float(range_lower), float(range_upper)), method='bounded')
+        # # Get the maximum value and the corresponding x value
+        # Nconc_foliage_maxG = f_max_result.x
+        # maxG_value = -f_max_result.fun
+
+        # return Nconc_foliage_maxG, maxG_value
