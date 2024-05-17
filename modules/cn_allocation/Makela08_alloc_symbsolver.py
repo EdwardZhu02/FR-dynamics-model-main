@@ -74,16 +74,21 @@ class PsiRCubicEqnSolver:
         x = sp.var('x')
         psi_r_roots = sp.solve(sp.Eq(x ** 3 + a_1 * x ** 2 + a_2 * x + a_3, 0), x)
 
+        # Extracting real roots
         # Ref: https://blog.csdn.net/qq_43374245/article/details/125591922
         # Dealing with 0.e-XI non-complex problem
-        psi_r_roots_conv = [float(str(indv_root).split(" ")[0]) for indv_root in psi_r_roots
-                            if not isinstance(indv_root, complex)]
+        psi_r_realroots_conv = [float(str(indv_root).split(" ")[0]) for indv_root in psi_r_roots
+                                if not isinstance(indv_root, complex)]
 
-        return psi_r_roots, psi_r_roots_conv, [a_1, a_2, a_3]
+        psi_r_realroots_conv_positive = [indv_real_root for indv_real_root in psi_r_realroots_conv
+                                         if indv_real_root >= 0]
+
+        return psi_r_roots, psi_r_realroots_conv, psi_r_realroots_conv_positive, [a_1, a_2, a_3]
 
 
 class DryMassFoliageSolver:
-    def __init__(self, Nup_max_specific, Photosyn_lightsat, params_dict):
+    def __init__(self, Nup_max_specific, Photosyn_lightsat, params_dict,
+                 Nconc_foliage=None, use_numeric_Nconc_foliage=False):
         # Fixed parameters
         self.alpha_w = params_dict["alpha_w"]
         self.c_H = params_dict["c_H"]
@@ -102,8 +107,13 @@ class DryMassFoliageSolver:
         # Specified by environmental conditions
         self.Photosyn_lightsat = Photosyn_lightsat
         self.Nup_max_specific = Nup_max_specific
-        # Variable used for symbolic calculation
-        self.Nconc_foliage = sp.symbols("Nconc_foliage")
+
+        if use_numeric_Nconc_foliage:
+            # Use pre-calculated values (numeric solving)
+            self.Nconc_foliage = Nconc_foliage
+        else:
+            # Variable used for symbolic calculation (symbolic solving)
+            self.Nconc_foliage = sp.symbols("Nconc_foliage")
 
     def solve_carbon(self, symb_psi_r):
         """
@@ -147,13 +157,20 @@ class DryMassFoliageSolver:
 
 
 class BiomassProductionSolver:
-    def __init__(self, params_dict):
-        self.Nconc_foliage = sp.symbols("Nconc_foliage")
+    def __init__(self, params_dict, Nconc_foliage=None, use_numeric_Nconc_foliage=False):
+
         self.AvgLongevity_foliage = params_dict["AvgLongevity_foliage"]
         self.AvgLongevity_wood = params_dict["AvgLongevity_wood"]
         self.AvgLongevity_root = params_dict["AvgLongevity_root"]
         self.alpha_w = params_dict["alpha_w"]
         self.c_H = params_dict["c_H"]
+
+        if use_numeric_Nconc_foliage:
+            # Use pre-calculated values (numeric solving)
+            self.Nconc_foliage = Nconc_foliage
+        else:
+            # Variable used for symbolic calculation (symbolic solving)
+            self.Nconc_foliage = sp.symbols("Nconc_foliage")
 
     def solve_total_biomass_production(self, symb_DM_foliage, symb_psi_r):
         """
