@@ -8,23 +8,25 @@
 # ====================================
 
 params_makela08_spruce = {
-    "AvgLongevity_foliage":     8,      # Mean lifetime (yr)
-    "AvgLongevity_wood":        33.3,   # Mean lifetime (yr)
-    "AvgLongevity_root":        1.25,   # Mean lifetime (yr)
+    "AvgLongevity_foliage":     8,      # T_f  | Mean lifetime (yr)
+    "AvgLongevity_wood":        33.3,   # T_w  | Mean lifetime (yr)
+    "AvgLongevity_root":        1.25,   # T_r  | Mean lifetime (yr)
 
-    "alpha_w":                  0.4,    # Sapwood weight per unit foliage and pipe length
-    "c_H":                      3400,   # ‘Steady-state’ pipe length coefficient
+    "alpha_w":                  0.4,    # alpha_w | Sapwood weight per unit foliage and pipe length
+    "c_H":                      3400,   # c_H     | ‘Steady-state’ pipe length coefficient
 
-    "Kr":                      2000,   # Amount of roots capturing 50% of available N (kg/ha)
-    "Kf":                      8000,   # Amount of foliage capturing 50% of maximum C gain (kg/ha)
+    "Kr":                      2000,    # K_r | Amount of roots capturing 50% of available N (kg/ha)
+    "Kf":                      8000,    # K_f | Amount of foliage capturing 50% of maximum C gain (kg/ha)
 
-    "NResorbFrac_foliage":      0.3,    # Proportion N recycled
-    "NResorbFrac_wood":         0.3,    # Proportion N recycled
-    "NResorbFrac_root":         0.3,    # Proportion N recycled
-    "Resp_Nspecific":           16,     # Specific rate of maintenance respiration (kg−1 N yr−1)
-    "CtoDM_frac":               1.54,   # Growth efficiency, Yg (kg DW kg−1 C)
-    "NrNf_ratio":               1,      # Ratio of fine root [N] to foliage [N]
-    "NwNf_ratio":               0.07,   # Ratio of sapwood [N] to foliage [N]
+    "NResorbFrac_foliage":      0.3,    # f_f | Proportion N recycled
+    "NResorbFrac_wood":         0.3,    # f_w | Proportion N recycled
+    "NResorbFrac_root":         0.3,    # f_r | Proportion N recycled
+    "Resp_Nspecific":           16,     # r_m | Specific rate of maintenance respiration (kg−1 N yr−1)
+
+    "CtoDM_frac":               1.54,   # Y   | Growth efficiency, Yg (kg DW kg−1 C)
+
+    "NrNf_ratio":               1,      # n_r | Ratio of fine root [N] to foliage [N]
+    "NwNf_ratio":               0.07,   # n_w | Ratio of sapwood [N] to foliage [N]
 }
 
 params_makela08_pine = {
