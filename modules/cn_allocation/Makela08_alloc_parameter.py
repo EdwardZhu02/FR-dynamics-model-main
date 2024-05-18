@@ -27,19 +27,11 @@ params_makela08_spruce = {
 
     "NrNf_ratio":               1,      # n_r | Ratio of fine root [N] to foliage [N]
     "NwNf_ratio":               0.07,   # n_w | Ratio of sapwood [N] to foliage [N]
-=======
-    "NResorbFrac_foliage":      0.3,    # Proportion N recycled
-    "NResorbFrac_wood":         0.3,    # Proportion N recycled
-    "NResorbFrac_root":         0.3,    # Proportion N recycled
-    "Resp_Nspecific":           16,     # Specific rate of maintenance respiration (kg−1 N yr−1)
-    "CtoDM_frac":               1.54,   # Growth efficiency, Yg (kg DW kg−1 C)
-    "NrNf_ratio":               1,      # Ratio of fine root [N] to foliage [N]
-    "NwNf_ratio":               0.07,   # Ratio of sapwood [N] to foliage [N]
 
     "Nconc_foliage_structural": 0.008,  # Structural (non-photosynthetic) N concentration in foliage (kg N/kg DW)
     "Nconc_ref":                0.002,  # Reference photosynthetic N at sigma_fM = sigma_fM0/2 (kg N/kg DW)
     "Photosyn_Nsat":            4,      # N-saturated rate of photosynthesis (kg C / kg DW-1 yr-1)
->>>>>>> f29b6294a9f28d5deb0410d75e91aef025e14617
+
 }
 
 params_makela08_pine = {
