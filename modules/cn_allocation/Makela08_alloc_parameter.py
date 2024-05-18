@@ -25,6 +25,10 @@ params_makela08_spruce = {
     "CtoDM_frac":               1.54,   # Growth efficiency, Yg (kg DW kg−1 C)
     "NrNf_ratio":               1,      # Ratio of fine root [N] to foliage [N]
     "NwNf_ratio":               0.07,   # Ratio of sapwood [N] to foliage [N]
+
+    "Nconc_foliage_structural": 0.008,  # Structural (non-photosynthetic) N concentration in foliage (kg N/kg DW)
+    "Nconc_ref":                0.002,  # Reference photosynthetic N at sigma_fM = sigma_fM0/2 (kg N/kg DW)
+    "Photosyn_Nsat":            4,      # N-saturated rate of photosynthesis (kg C / kg DW-1 yr-1)
 }
 
 params_makela08_pine = {
@@ -45,6 +49,10 @@ params_makela08_pine = {
     "CtoDM_frac":               1.54,
     "NrNf_ratio":               1,
     "NwNf_ratio":               0.07,
+
+    "Nconc_foliage_structural": 0.009,
+    "Nconc_ref":                0.002,
+    "Photosyn_Nsat":            8,
 }
 
 

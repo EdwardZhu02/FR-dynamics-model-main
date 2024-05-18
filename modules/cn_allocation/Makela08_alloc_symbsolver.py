@@ -33,6 +33,21 @@ class PsiRCubicEqnSolver:
         self.NResorbFrac_wood = params_dict["NResorbFrac_wood"]
         self.NResorbFrac_root = params_dict["NResorbFrac_root"]
 
+        self.Nconc_foliage_structural = params_dict["Nconc_foliage_structural"]
+        self.Nconc_ref = params_dict["Nconc_ref"]
+        self.Photosyn_Nsat = params_dict["Photosyn_Nsat"]
+
+    def solve_photosyn_rate_lightsat_Ndep(self, Nconc_foliage):
+        """
+        Eqn. 10, Calculate Photosyn_lightsat based on its N dependence
+        :param Nconc_foliage:
+        :return: sigma_fM, Photosyn_lightsat
+        """
+        Nconc_foliage_actual = float(max([Nconc_foliage - self.Nconc_foliage_structural, 0]))
+        Photosyn_lightsat = self.Photosyn_Nsat * Nconc_foliage_actual / (Nconc_foliage_actual + self.Nconc_ref)
+
+        return Photosyn_lightsat
+
     def solve_cubic_eqn_numeric(self, Nup_max_specific, Photosyn_lightsat, Nconc_foliage):
         """
         Solve psi_r = f(Nconc_foliage), given Nup_max_specific and Photosyn_lightsat
