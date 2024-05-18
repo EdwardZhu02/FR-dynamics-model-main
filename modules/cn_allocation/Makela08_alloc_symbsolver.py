@@ -189,7 +189,7 @@ class BiomassProductionSolver:
 
     def solve_total_biomass_production(self, symb_DM_foliage, symb_psi_r):
         """
-
+        Eqn. S1
         :param symb_DM_foliage: f(Nconc_foliage)
         :param symb_psi_r: f(Nconc_foliage)
         :return:
