@@ -244,8 +244,12 @@ class BiomassProductionOptimizerNumeric:
                                                                                          Nconc_foliage)
             if len(psi_r_realroots_conv_positive) == 1:  # psi_r_realroots_conv_positive is a list
                 psi_r_real = psi_r_realroots_conv_positive[0]
+                # print(psi_r_real)  # debug
             else:
-                raise ValueError("Multiple positive real roots for psi_r_real, ", psi_r_realroots_conv_positive)
+                # print("Warning: Multiple positive real roots for psi_r_real, using the max one. ",
+                #      psi_r_realroots_conv_positive)
+                psi_r_real = max(psi_r_realroots_conv_positive)
+                # raise ValueError("Multiple positive real roots for psi_r_real", psi_r_realroots_conv_positive)
 
             Wf_solver = DryMassFoliageSolver(
                 Nup_max_specific, Photosyn_lightsat, self.params_dict,

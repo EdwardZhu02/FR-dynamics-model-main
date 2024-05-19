@@ -44,11 +44,13 @@ class DownstreamValueSolver(Makela08_alloc_mainsolver.BaseSolver):
             DM_foliage = Wf_solver.solve_carbon(psi_r_real)[0]
         else:  # method == "N"
             DM_foliage = Wf_solver.solve_nitrogen(psi_r_real)[0]
+        # print(DM_foliage)
 
         # Step3: calculate steady-state Wr and Ww based on optimum steady-state Wf
         DM_root = psi_r_real * DM_foliage
+        # TODO: Check DM_wood calculation equation, now not so concordant with the manuscript
         DM_wood = self.alpha_w * DM_foliage * (self.c_H * self.Nconc_foliage)  # Eqn. 12 and 15
 
-        return DM_foliage, DM_wood, DM_root
+        return DM_foliage[0], DM_wood[0], DM_root[0]
 
 
