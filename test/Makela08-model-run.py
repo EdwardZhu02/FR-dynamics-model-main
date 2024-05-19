@@ -7,7 +7,7 @@
 # @E-mail           : edwardmashed@gmail.com
 # ====================================
 
-from modules.cn_allocation import Makela08_alloc_parameter, Makela08_alloc_symbsolver
+from modules.cn_allocation import Makela08_alloc_parameter, Makela08_alloc_mainsolver
 import numpy as np
 import sympy as sp
 
@@ -124,10 +124,10 @@ Wf_solver = Makela08_alloc_symbsolver.DryMassFoliageSolver(
 symb_DM_foliage_C = Wf_solver.solve_carbon(psi_r_solution_example[0])[0]
 symb_DM_foliage_N = Wf_solver.solve_nitrogen(psi_r_solution_example[0])[0]
 
-G_solver = Makela08_alloc_symbsolver.BiomassProductionSolver(params_dict)
+G_solver = Makela08_alloc_mainsolver.BiomassProductionSolver(params_dict)
 
 symb_G_C = G_solver.solve_total_biomass_production(symb_DM_foliage_C, psi_r_solution_example[0])
 symb_G_N = G_solver.solve_total_biomass_production(symb_DM_foliage_N, psi_r_solution_example[0])
 
-G_optimizer = Makela08_alloc_symbsolver.BiomassProductionOptimizer(symb_G_C, symb_G_N)
+G_optimizer = Makela08_alloc_mainsolver.BiomassProductionOptimizer(symb_G_C, symb_G_N)
 Nconc_foliage_maxG, maxG_value = G_optimizer.optimize_total_biomass_production(0, 10, "C")
