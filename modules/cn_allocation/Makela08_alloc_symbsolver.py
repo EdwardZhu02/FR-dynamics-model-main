@@ -11,7 +11,7 @@
 # Output: G = f(Nconc_foliage)
 import sympy as sp
 import numpy as np
-from scipy.optimize import minimize_scalar
+from scipy.optimize import minimize_scalar, minimize
 import matplotlib.pyplot as plt
 from numpy.polynomial.polynomial import Polynomial
 
@@ -226,20 +226,84 @@ class BiomassProductionOptimizer:
         else:  # method == "N"
             f_numeric = sp.lambdify(Nconc_foliage, self._symb_G_N, 'numpy')
 
-        return self._symb_G_C
+        def func_to_minimize(x_val):
+            return -f_numeric(x_val)
 
-        # x_vals = np.linspace(100,1000,4500)
-        # y_vals = f_numeric(x_vals)
-        # plt.plot(x_vals,y_vals)
+        # Use scipy's minimize_scalar function to find the maximum
+        f_max_result = minimize_scalar(func_to_minimize,
+                                       bounds=(float(range_lower), float(range_upper)), method='bounded')
+        # Get the maximum value and the corresponding x value
+        Nconc_foliage_maxG = f_max_result.x
+        maxG_value = -f_max_result.fun
 
-        # def func_to_minimize(x_val):
-        #     return -f_numeric(x_val)
+        return Nconc_foliage_maxG, maxG_value
 
-        # # Use scipy's minimize_scalar function to find the maximum
-        # f_max_result = minimize_scalar(func_to_minimize,
-        #                                bounds=(float(range_lower), float(range_upper)), method='bounded')
-        # # Get the maximum value and the corresponding x value
-        # Nconc_foliage_maxG = f_max_result.x
-        # maxG_value = -f_max_result.fun
 
-        # return Nconc_foliage_maxG, maxG_value
+class BiomassProductionOptimizerNumeric:
+    def __init__(self, psi_r_solver, params_dict) -> None:
+        self.solver = psi_r_solver
+        self.params_dict = params_dict
+
+    def optimize_total_biomass_production(self, lower_range=1e-8, upper_range=0.1, method = "C"):
+        '''
+        using scipy.optimize.minimize
+        '''
+
+        if method == "C":
+            
+            def solver_func(Nconc_foliage):
+
+                Nup_max_specific = 5 # TODO: 如果是变量就给他扔外面去
+    
+                Photosyn_lightsat = self.solver.solve_photosyn_rate_lightsat_Ndep(Nconc_foliage)
+                _, _, psi_r_realroots_conv_positive, _ = self.solver.solve_cubic_eqn_numeric(Nup_max_specific, Photosyn_lightsat, Nconc_foliage)
+                psi_r_real = psi_r_realroots_conv_positive[0]
+                Photosyn_lightsat_forsolve = Photosyn_lightsat
+                
+                Wf_solver = DryMassFoliageSolver(
+                    Nup_max_specific, Photosyn_lightsat_forsolve, self.params_dict,
+                    Nconc_foliage=Nconc_foliage, use_numeric_Nconc_foliage=True
+                )
+                DM_foliage_C = Wf_solver.solve_carbon(psi_r_real)[0]
+                
+                G_solver = BiomassProductionSolver(
+                    self.params_dict,
+                    Nconc_foliage=Nconc_foliage, use_numeric_Nconc_foliage=True
+                )
+                
+                G_C = G_solver.solve_total_biomass_production(DM_foliage_C, psi_r_real)
+                
+                # return Nconc_foliage, psi_r_real, DM_foliage_C, G_C
+                return -G_C
+        
+        else:  # method == "N"
+            def solver_func(Nconc_foliage):
+
+                Nup_max_specific = 5 # TODO: 如果是变量就给他扔外面去
+    
+                Photosyn_lightsat = self.solver.solve_photosyn_rate_lightsat_Ndep(Nconc_foliage)
+                _, _, psi_r_realroots_conv_positive, _ = self.solver.solve_cubic_eqn_numeric(Nup_max_specific, Photosyn_lightsat, Nconc_foliage)
+                psi_r_real = psi_r_realroots_conv_positive[0]
+                Photosyn_lightsat_forsolve = Photosyn_lightsat
+                
+                Wf_solver = DryMassFoliageSolver(
+                    Nup_max_specific, Photosyn_lightsat_forsolve, self.params_dict,
+                    Nconc_foliage=Nconc_foliage, use_numeric_Nconc_foliage=True
+                )
+                DM_foliage_N = Wf_solver.solve_nitrogen(psi_r_real)[0]
+                
+                G_solver = BiomassProductionSolver(
+                    self.params_dict,
+                    Nconc_foliage=Nconc_foliage, use_numeric_Nconc_foliage=True
+                )
+                
+                G_N = G_solver.solve_total_biomass_production(DM_foliage_N, psi_r_real)
+                
+                # return Nconc_foliage, psi_r_real, DM_foliage_C, G_C
+                return -G_N
+
+        f_max_result = minimize(solver_func, x0=0.015,  bounds = [(lower_range, upper_range)] ) # TODO: x0=0.015是否具有普适性？
+        Nconc_foliage_maxG = f_max_result.x
+        maxG_value = -f_max_result.fun
+
+        return Nconc_foliage_maxG, maxG_value 
