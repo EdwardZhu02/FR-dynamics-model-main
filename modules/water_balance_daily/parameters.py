@@ -1,19 +1,17 @@
-import numpy as np
 
 
 
-s_maxlayer =  11                        # Number of soil layers
 
-i_cz = np.float64()                     # Average soil elevation (m)
-i_delz = np.float64()                   # Thickness of each soil layer (m)
+params_watbal = {
 
-s_delz = np.empty(shape=(n,), dtype=np.float64)     # Thickness of each soil layer (m)
-
-cH2Ol_s = np.empty(shape=(n,), dtype=np.float64)    # Soil water content in each layer (could also be called theta(:)) (m)
-
-su__ = np.empty(shape=(n,), dtype=np.float64)       # Soil saturation degree in each layer (-)
-
-s_thetar = np.empty(shape=(n,), dtype=np.float64)   # Residual soil water content (-)
-
-s_thetas = np.empty(shape=(n,), dtype=np.float64)   # Saturated soil water content (-)
-
+        "i_cz"              #i_cz: Average soil elevation (m)
+        "i_zr"              #i_zr: Average channel elevation (m)
+        "s_delz"            #s_delz: Thickness of each soil layer (m)
+        "s_avg"             #s_avg: Van Genuchten soil parameter a (1/m)
+        "s_nvg"             #s_nvg: Van Genuchten soil parameter n (-)
+        "c_mvg"             #c_mvg: Van Genuchten soil parameter m (-)
+        "s_ksat"            #s_ksat: Saturated hydraulic conductivity (m/s)
+        "s_thetar"          #s_thetar: Residual soil water content (-)
+        "s_thetas"          #s_thetas: Saturated soil water content (-)
+        
+}

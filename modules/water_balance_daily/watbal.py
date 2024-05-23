@@ -1,5 +1,29 @@
 import numpy as np
 
+class WaterBalanceSolver:
+    def __init__(self, params_dict) -> None:
+        self.i_cz = params_dict["i_cz"]
+        self.i_zr = params_dict["i_zr"]
+        self.s_delz = params_dict["s_delz"]
+        self.s_avg = params_dict["s_avg"]
+        self.s_nvg = params_dict["s_nvg"]
+        self.c_mvg = params_dict["c_mvg"]
+        self.s_ksat = params_dict["s_ksat"]
+        self.s_thetar = params_dict["s_thetar"]
+        self.s_thetas = params_dict["s_thetas"]
+
+        self.zwnew, self.wlayernew, self.pcapnew, self.sunew, self.kunsat_, self.cH2Ol_s = \
+            waterbalance_init(self.i_cz, self.i_zr, self.s_delz, self.s_avg, \
+                              self.s_nvg, self.c_mvg, self.s_ksat, self.s_thetar, self.s_thetas)
+
+        pass
+
+
+
+
+
+    
+
 def waterbalance_init(i_cz, i_zr, s_delz, s_avg, s_nvg, c_mvg, s_ksat, s_thetar, s_thetas):
     '''
     params: i_cz: Average soil elevation (m)
