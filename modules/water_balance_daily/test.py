@@ -21,13 +21,14 @@ def waterbalance_init(i_cz, i_zr, s_delz, s_avg, s_nvg, c_mvg, s_ksat, s_thetar,
     '''
 
     # 初始化变量
-    dtsu_count = 0
+    dtsu_count = 0      # For speed analysis, count of how often dtsu or dtmax is time limiting
     dtmax_count = 0
 
-    zw_ = i_cz
+    zw_ = i_cz          # Elevation of water table (m)
     wlayer_ = 0
 
     # 确定层数
+
     while zw_ > i_zr:
         wlayer_ += 1
         zw_ -= s_delz[wlayer_]
