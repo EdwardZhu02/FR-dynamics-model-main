@@ -1,5 +1,68 @@
 import numpy as np
 
+def waterbalance_init(i_cz, i_zr, s_delz, s_avg, s_nvg, c_mvg, s_ksat, s_thetar, s_thetas):
+    '''
+    params: i_cz: Average soil elevation (m)
+            i_zr: Average channel elevation (m)
+            s_delz: Thickness of each soil layer (m)
+            s_avg: Van Genuchten soil parameter a (1/m)
+            s_nvg: Van Genuchten soil parameter n (-)
+            c_mvg: Van Genuchten soil parameter m (-)
+            s_ksat: Saturated hydraulic conductivity (m/s)
+            s_thetar: Residual soil water content (-)
+            s_thetas: Saturated soil water content (-)
+
+    return: zwnew: Elevation of water table at next time step (m)
+            wlayernew: Number of layers in unsaturated zone for next time step
+            pcapnew: Matric pressure head in each layer at next time step (m)
+            sunew: Soil saturation degree in each layer at next time step (-)
+            kunsat_: Unsaturated hydraulic conductivity in each soil layer (m/s)
+            cH2Ol_s: Soil water content in each layer (could also be called theta(:)) (m)
+    '''
+
+    # 初始化变量
+    dtsu_count = 0
+    dtmax_count = 0
+
+    zw_ = i_cz
+    wlayer_ = 0
+
+    # 确定层数
+    while zw_ > i_zr:
+        wlayer_ += 1
+        zw_ -= s_delz[wlayer_]
+
+    s_maxlayer = len(s_delz)
+    pcap_ = np.zeros(s_maxlayer)
+    
+    # 计算平衡压力头
+    for jj in range(wlayer_, 0, -1):
+        pcap_[jj] = 0.5 * (s_delz[jj+1] + s_delz[jj]) + pcap_[jj+1]
+
+    sueq = np.zeros(s_maxlayer)
+    su__ = np.zeros(s_maxlayer)
+
+    # 计算平衡饱和度和当前饱和度
+    for jj in range(1, s_maxlayer):
+        sueq[jj] = (1 / ((0.5 * (s_delz[jj+1] + s_delz[jj]) * s_avg[jj]) ** s_nvg[jj] + 1)) ** c_mvg[jj]
+    
+    sueq[s_maxlayer] = (1 / ((0.5 * s_delz[jj] * s_avg[jj]) ** s_nvg[jj] + 1)) ** c_mvg[jj]
+
+    su__ = (1 / ((pcap_ * s_avg) ** s_nvg + 1)) ** c_mvg
+
+    kunsat_ = ((-su__ ** (1 / c_mvg) + 1) ** c_mvg - 1) ** 2 * s_ksat * np.sqrt(su__)
+
+    cH2Ol_s = (-su__ * s_thetar + su__ * s_thetas + s_thetar) * s_delz
+
+    zwnew = zw_
+    wlayernew = wlayer_
+    pcapnew = pcap_
+    sunew = su__
+
+    return zwnew, wlayernew, pcapnew, sunew, kunsat_, cH2Ol_s 
+
+
+
 def waterbalance(su__, s_thetar, s_thetas, s_delz, i_no_veg, ruptkt__, ruptkg__, iovec, wlayer_):
     '''
     params :su__ : Soil saturation degree in each layer (-)
@@ -52,50 +115,39 @@ def waterbalance(su__, s_thetar, s_thetas, s_delz, i_no_veg, ruptkt__, ruptkg__,
     # (sunew, wlayernew, pcapnew, kunsatnew, zwnew)
     sunew, pcapnew, kunsatnew, zwnew = waterbalance_update_state(sunew, su__, dt_, s_maxlayer, sueq, s_avg, c_mvg, s_nvg, s_ksat, s_delz)
 
-    waterbalance_diag()
+    waterbalance_diag(sunew, s_thetar, s_thetas, s_delz, wc_, dt_, io__)
 
-# def waterbalance_init(i_cz, i_zr, s_delz, s_avg, s_nvg, c_mvg, s_ksat, s_thetar, s_thetas):\
 
-#     # 初始化变量
-#     dtsu_count = 0
-#     dtmax_count = 0
-
-#     zw_ = i_cz
-#     wlayer_ = 0
-
-#     # 确定层数
-#     while zw_ > i_zr:
-#         wlayer_ += 1
-#         zw_ -= s_delz[wlayer_]
-
-#     s_maxlayer = len(s_delz)
-#     pcap_ = np.zeros(s_maxlayer)
+def waterbalance_diag(sunew, s_thetar, s_thetas, s_delz, wc_, dt_, io__):
+    '''
+    params: sunew: Soil saturation degree in each layer at next time step (-)
+            s_thetar: Residual soil water content (-)
+            s_thetas: Saturated soil water content (-)
+            s_delz: Thickness of each soil layer (m)
+            wc_: Total soil water content (m)
+            dt_: Length of time step (s)
+            io__: Input minus output of water in soil domain (m/s)
     
-#     # 计算平衡压力头
-#     for jj in range(wlayer_, 0, -1):
-#         pcap_[jj] = 0.5 * (s_delz[jj+1] + s_delz[jj]) + pcap_[jj+1]
+    return: 
 
-#     sueq = np.zeros(s_maxlayer)
-#     su__ = np.zeros(s_maxlayer)
-
-#     # 计算平衡饱和度和当前饱和度
-#     for jj in range(1, s_maxlayer):
-#         sueq[jj] = (1 / ((0.5 * (s_delz[jj+1] + s_delz[jj]) * s_avg[jj]) ** s_nvg[jj] + 1)) ** c_mvg[jj]
+    '''
     
-#     sueq[s_maxlayer] = (1 / ((0.5 * s_delz[jj] * s_avg[jj]) ** s_nvg[jj] + 1)) ** c_mvg[jj]
+    cH2Ol_s = (-sunew * s_thetar + sunew * s_thetas + s_thetar) * s_delz
 
-#     su__ = (1 / ((pcap_ * s_avg) ** s_nvg + 1)) ** c_mvg
+    wcnew = np.sum(cH2Ol_s)
 
-#     kunsat_ = ((-su__ ** (1 / c_mvg) + 1) ** c_mvg - 1) ** 2 * s_ksat * np.sqrt(su__)
+    if np.abs(wc_ + dt_ * io__ - wcnew) > 1e-6:
+        # 请根据需要自行添加错误处理逻辑
+        # msg = "error=" + str(wc_ + dt_ * io__ - wcnew) + " ys=" + str(zwnew)
+        # print(msg)
+        # msg = "sum(iovec) = " + str(np.sum(iovec[:])) + "; io = " + str(io__)
+        # print(msg)
+        # msg = "day = " + str(nday) + "; hour = " + str(nhour)
+        # print(msg)
+        pass
 
-#     cH2Ol_s = (-su__ * s_thetar + su__ * s_thetas + s_thetar) * s_delz
+    return
 
-#     zwnew = zw_
-#     wlayernew = wlayer_
-#     pcapnew = pcap_
-#     sunew = su__
-
-#     return zwnew, wlayernew, pcapnew, sunew, kunsat_, cH2Ol_s 
 
 def waterbalance_update_state(sunew, su__, dt_, s_maxlayer, sueq, s_avg, c_mvg, s_nvg, s_ksat, s_delz):
     '''
