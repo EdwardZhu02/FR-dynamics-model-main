@@ -19,9 +19,6 @@ class WaterBalanceSolver:
         pass
 
 
-
-
-
     
 
 def waterbalance_init(i_cz, i_zr, s_delz, s_avg, s_nvg, c_mvg, s_ksat, s_thetar, s_thetas):
