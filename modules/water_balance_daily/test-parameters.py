@@ -12,3 +12,4 @@ params_watbal = {
         "s_thetas"  # s_thetas: Saturated soil water content (-)
         
 }
+
