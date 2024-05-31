@@ -10,14 +10,88 @@ import math
 import numpy as np
 
 
+class WaterBalanceInitializer:
+
+    def __init__(self, elevation_channel_avg, elevation_soil_avg, soil_layer_thickness):
+        """
+        Initialize conditions of water balance simulation
+        :param elevation_water_table: zw_: Elevation of water table (m)
+        :param elevation_channel_avg: i_zr: Average channel elevation (m)
+        :param elevation_soil_avg: i_cz: Average soil elevation(m)
+        :param soil_layer_thickness: s_delz: Thickness of each soil layer (m) - SIMPLIFIED as CONSTANT
+
+        """
+        # Subsequent calculation use zw_ only
+        self.elevation_water_table = elevation_soil_avg  # zw_ = i_cz
+        self.elevation_channel_avg = elevation_channel_avg
+        self.soil_layer_thickness = soil_layer_thickness  # assumed default all = 0.5m
+
+        # Calculate unsaturated soil layers
+        self.unsat_layer_count = 0
+
+        while self.elevation_water_table > self.elevation_channel_avg:
+            self.unsat_layer_count += 1
+            self.elevation_water_table -= self.soil_layer_thickness
+
+    def solve_equilibrium_pressure_head(self, soil_layers_total):
+        # phead_matric_bylayer = []  # pcap_: Matric pressure head in each layer (at current time step)
+        # initial values
+        phead_matric_bylayer = np.zeros(int(soil_layers_total))  # TODO: confirm initial value
+
+        for layer_id in range(0, self.unsat_layer_count):
+            phead_matric_bylayer[layer_id] = 0.5 * (
+                    self.soil_layer_thickness[layer_id + 1] + self.soil_layer_thickness[layer_id]
+            ) + phead_matric_bylayer[layer_id + 1]
+
+    """
+    pcap_ = np.zeros(s_maxlayer)
+    pcap_[wlayer_:] = 0.0
+
+    # Equilibrium pressure head
+    for jj in range(wlayer_, 0, -1):
+        pcap_[jj - 1] = 0.5 * s_delz[jj] + 0.5 * s_delz[jj - 1] + pcap_[jj]
+
+    sueq = np.zeros(s_maxlayer)
+
+    for jj in range(1, s_maxlayer):
+        sueq[jj - 1] = (1.0 / ((0.5 * (s_delz[jj] + s_delz[jj - 1]) * s_avg[jj - 1]) ** s_nvg[jj - 1] + 1.0)) ** c_mvg[
+            jj - 1]
+
+    sueq[s_maxlayer - 1] = (1.0 / (
+                (0.5 * s_delz[s_maxlayer - 1] * s_avg[s_maxlayer - 1]) ** s_nvg[s_maxlayer - 1] + 1.0)) ** c_mvg[
+                               s_maxlayer - 1]
+
+    su__ = (1.0 / ((pcap_ * s_avg) ** s_nvg + 1.0)) ** c_mvg
+
+    # Unsaturated hydraulic conductivity as a function of su
+    kunsat_ = ((-su__ ** (1.0 / c_mvg) + 1.0) ** c_mvg - 1.0) ** 2.0 * s_ksat * np.sqrt(su__)
+    cH2Ol_s = (-su__ * s_thetar + su__ * s_thetas + s_thetar) * s_delz
+
+    zwnew = zw_
+    wlayernew = wlayer_
+    pcapnew = pcap_
+    sunew = su__
+    kunsatnew = kunsat_  # Unsaturated hydraulic conductivity (m s−1)
+
+    return {
+        'zwnew': zwnew,
+        'wlayernew': wlayernew,
+        'pcapnew': pcapnew,
+        'sunew': sunew,
+        'kunsatnew': kunsatnew,
+        'cH2Ol_s': cH2Ol_s
+    }
+    """
+
+
 class HourlyFluxSolver:
     def __init__(self, unsat_layer_count, k_unsat, suchead_matrix, layer_thickness):
         """
 
-        :param unsat_layer_count:
+        :param unsat_layer_count: wlayer_
         :param k_unsat:
         :param suchead_matrix:
-        :param layer_thickness:
+        :param layer_thickness: s_delz: Thickness of each soil layer (m)
         """
         self.unsat_layer_count = unsat_layer_count  # int: wlayer_
         self.k_unsat = k_unsat  # list
@@ -59,9 +133,11 @@ class HourlyFluxSolver:
                     math.sqrt(elevation_soil_avg - elevation_channel_avg) -
                     math.sqrt(elevation_soil_avg - elevation_water_table)
             ) * (
-                    elevation_water_table - elevation_channel_avg
-            ) * k_sat_saturated[self.unsat_layer_count - 1] / (
-                    math.sqrt(elevation_soil_avg - elevation_channel_avg) * capital_gamma_s * math.cos(i_go))
+                                            elevation_water_table - elevation_channel_avg
+                                    ) * k_sat_saturated[self.unsat_layer_count - 1] / (
+                                            math.sqrt(
+                                                elevation_soil_avg - elevation_channel_avg) * capital_gamma_s * math.cos(
+                                        i_go))
                                     )  # max
             # k_sat_saturated[self.unsat_layer_count - 1]: the bottom-most layer
         else:
