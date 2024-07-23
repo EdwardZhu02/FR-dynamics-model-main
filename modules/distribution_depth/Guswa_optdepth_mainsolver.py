@@ -7,7 +7,7 @@
 # @E-mail           : edwardmashed@gmail.com
 # ====================================
 import math
-
+import scipy.special as sp  # For gamma functions
 import numpy as np
 
 
@@ -57,6 +57,7 @@ class OptimalRootingDepthSolver:
         """
 
         # Eqn. 5, calculate A
+        # itm_ stands for "intermediate values"
         itm_A = ((self.RootResp_amb * self.RootLengthDensity) /
                  (self.SpecificRootLength * self.WUE_photosynthesis * Transp_pot * self.FractionGrowingSeason))
 
@@ -88,10 +89,43 @@ class OptimalRootingDepthSolver:
 
         return [RootingDepth, RootingZoneStorageCap, RootingZoneStorageCap_norm]
 
-    def solve_g10_method(self):
+    def solve_g10_method(self, Transp_pot, RainfallDepth_tot,
+                         RootingDepth_iter_lower=0, RootingDepth_iter_upper=3001, RootingDepth_iter_interval=0.1):
         """
-        Ref: Speich 2018 manuscript
+        Approximation, ref. Speich 2018 manuscript
+        Epn.1: Marginal cost = marginal benefit
+        Optimal rooting depth achieved when dT/dZe equals (RootResp * RLD) / (SRL * WUE * FracGS)
 
+        Optimal Ze is found by applying Eqn.6 to increasing values of Ze, until the difference to the previous iteration
+            is less than or equal to that ratio
         :return:
         """
-        pass
+
+        def calc_single_transpiration(_Rootingdepth_indv):
+
+            # Calculation of Zn, Eqn.7, speich 2018 manuscript
+            RootingDepth_norm_precevents = (self.WaterContent_Avail / self.RainfallDepth_singevent_mean) * _Rootingdepth_indv
+            itm_W = RainfallDepth_tot / Transp_pot  # W = mean annual P / PT, unit-less
+
+            Transp_daily_mean = Transp_pot * itm_W - (
+                (math.exp(-RootingDepth_norm_precevents) * RootingDepth_norm_precevents ** (itm_W * RootingDepth_norm_precevents - 1)) /
+                (sp.gammainc(itm_W * RootingDepth_norm_precevents, RootingDepth_norm_precevents))
+            )  # <T>, mm/day, ref. Speich 2018 manuscript function (Eqn.6)
+
+            return Transp_daily_mean
+
+        itm_dTdZe = (self.RootResp_amb * self.RootLengthDensity) / (
+                self.SpecificRootLength * self.WUE_photosynthesis * self.FractionGrowingSeason)  # benchmark, Eqn.1
+
+        for RootingDepth_indv in np.arange(RootingDepth_iter_lower, RootingDepth_iter_upper, RootingDepth_iter_interval):
+            if RootingDepth_indv == RootingDepth_iter_lower:  # neglect the first calculation
+                continue
+
+            Transp_daily_mean_curr = calc_single_transpiration(RootingDepth_indv)
+            Transp_daily_mean_last = calc_single_transpiration(RootingDepth_indv - RootingDepth_iter_interval)
+            itm_iteration_diff = Transp_daily_mean_curr - Transp_daily_mean_last
+
+            if itm_iteration_diff <= itm_dTdZe:
+                return RootingDepth_indv
+        return None  # Optimal rooting depth not found
+
